@@ -64,12 +64,7 @@ fn action(matches: &ArgMatches) -> Option<Actions> {
 fn show(file: &str) -> Result<(), Box<dyn Error>> {
     let f = File::open(&file)?;
     let mut rdr = csv::Reader::from_reader(f);
-
-    // Instead of creating an iterator with the `records` method, we create
-    // an iterator with the `deserialize` method.
     for result in rdr.deserialize() {
-        // We must tell Serde what type we want to deserialize into.
-//        type Record = HashMap<String, String>;
         let record: Record = result?;
         println!("{:?}", record);
     }
