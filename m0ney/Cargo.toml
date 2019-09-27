@@ -1,0 +1,13 @@
+[package]
+name = "m0ney"
+version = "0.1.0"
+authors = ["trobanga <d@niel.re>"]
+edition = "2018"
+
+[dependencies]
+rust-ini = "0"
+clap = "2"
+dirs = "2"
+csv = "1"
+chrono = "*"
+serde = { version = "1", features = ["derive"] }
