@@ -6,59 +6,108 @@ use std::fs::{File, OpenOptions};
 use chrono;
 use serde::{Serialize, Deserialize};
 
+#[derive(Copy, Clone)]
 enum Actions {
     Show,
-    Add,
+    Get,
     Spend,
     Borrow,
     Repay,
 }
 
+fn action_from_matches(matches: &ArgMatches) -> Option<Actions> {
+    match matches.subcommand_name() {
+        Some("show") => Some(Actions::Show),
+        Some("get") => Some(Actions::Get),
+        Some("spend") => Some(Actions::Spend),
+        Some("borrow") => Some(Actions::Borrow),
+        Some("repay") => Some(Actions::Repay),
+        _ => None,
+    }
+}
+
+fn action_to_string(action: &Actions) -> String {
+    match action {
+        Actions::Show => String::from("show"),
+        Actions::Get => String::from("get"),
+        Actions::Spend => String::from("spend"),
+        Actions::Borrow => String::from("borrow"),
+        Actions::Repay => String::from("repay"),
+    }
+}
+
+fn description_from_action(action: &Actions) -> String {
+    match action {
+        Actions::Show => String::from("show"),
+        Actions::Get => String::from("from"),
+        Actions::Spend => String::from("on"),
+        Actions::Borrow => String::from("to"),
+        Actions::Repay => String::from("back"),
+    }
+}
+
+fn sign_from_action(action: &Actions) -> Result<f32, Box<dyn Error>> {
+    match action {
+        Actions::Get => Ok(1.),
+        Actions::Spend => Ok(-1.),
+        Actions::Borrow => Ok(-1.),
+        Actions::Repay => Ok(1.),
+        _ => Err("This action has no sign".into()),
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
-struct Record {
+pub struct Record {
     datetime: String,
     action: String,
-    amount: f64,
+    amount: f32,
     description: String,
-    balance: f64
+    balance: f32
 }
 
 impl Record {
-    fn new(action: String,
-           amount: f64,
+    fn new(action: &Actions,
+           amount: f32,
            description: String,
-           file: String) -> Result<Self, Box<dyn Error>> {
+           old_balance: f32) -> Result<Self, Box<dyn Error>> {
         let datetime = chrono::offset::Local::now().to_string();
-        let mut rdr = csv::Reader::from_path(file)?;
-        if let Some(x) = rdr.records().last().unwrap()?.get(4) {
-            let balance = amount + x.parse::<f64>()?;
-            return Ok(Record {datetime, action, amount, description, balance});
-        }
-        Err("Could not create new record".into())
+        let action = action_to_string(action);
+        let balance = old_balance + amount;
+        Ok(Record {datetime, action, amount, description, balance})
     }
 }
 
 pub fn perform_action(matches: &ArgMatches, file: &str) -> Result<(), Box<dyn Error>> {
-    match action(&matches) {
-        Some(Actions::Show) => show(&file),
-        Some(Actions::Add) => add(&matches, &file),
-        Some(Actions::Borrow) => borrow(&matches, &file),
-        _ => Err("Not implemented".into()),
+    if let Some(Actions::Show) = action_from_matches(&matches) {
+        return show(&file);
     }
+
+    let record = match action_from_matches(&matches) {
+        Some(action) => {
+            let description = description(&matches, &action)?;
+            let amount: f32 = amount(&matches, &action)?;
+            let balance = balance(&file)?;
+
+            Record::new(
+                &action,
+                amount,
+                description,
+                balance
+            )
+        }
+        _ => Err("Not implemented".into())
+    }?;
+    
+    add_record_to_file(&record, &file)    
 }
 
-fn action(matches: &ArgMatches) -> Option<Actions> {
-    if matches.is_present("show") {
-        return Some(Actions::Show);
-    } else {
-        return match matches.subcommand_name() {
-            Some("add") => Some(Actions::Add),
-            Some("spend") => Some(Actions::Spend),
-            Some("borrow") => Some(Actions::Borrow),
-            Some("repay") => Some(Actions::Repay),
-            _ => None,
-        };
+fn balance(file: &str) -> Result<f32, Box<dyn Error>> {
+    let mut rdr = csv::Reader::from_path(file)?;
+    if let Some(x) = rdr.records().last().unwrap()?.get(4) {
+        let balance = x.parse::<f32>()?;
+        return Ok(balance);
     }
+    Err("Could not read balance.".into())
 }
 
 fn show(file: &str) -> Result<(), Box<dyn Error>> {
@@ -67,28 +116,23 @@ fn show(file: &str) -> Result<(), Box<dyn Error>> {
     for result in rdr.deserialize() {
         let record: Record = result?;
         println!("{:?}", record);
-    }
-    
+    }    
     Ok(())
 }
 
-fn add<'a>(matches: &ArgMatches<'a>, file: &str) -> Result<(), Box<dyn Error>> {
-    if let Some(matches) = matches.subcommand_matches("add") {
-        let action = String::from("add");
-        let amount: f64 = matches.value_of("amount").unwrap().parse::<f64>()?;
-        let category = String::from(matches.value_of("category").unwrap());
-        
-        let record = Record::new(
-            action,
-            amount,
-            category,
-            String::from(file)
-        )?;
-        
-        add_record_to_file(&record, file)?;
+fn description(matches: &ArgMatches, action: &Actions) -> Result<String, Box<dyn Error>> {
+    if let Some(matches) = matches.subcommand_matches(action_to_string(&action)) {
+        return Ok(String::from(matches.value_of(description_from_action(&action)).unwrap()));
     }
-    
-    Ok(())
+    Err("Could not determine description.".into())
+}
+
+fn amount(matches: &ArgMatches, action: &Actions) -> Result<f32, Box<dyn Error>> {
+    if let Some(matches) = matches.subcommand_matches(action_to_string(&action)) {
+        let amount = matches.value_of("amount").unwrap().parse::<f32>()?;
+        return Ok(sign_from_action(&action)? * amount);
+    }
+    Err("Could not determine amount.".into())
 }
 
 fn add_record_to_file(record: &Record, file: &str) -> Result<(), Box<dyn Error>> {
@@ -103,12 +147,6 @@ fn add_record_to_file(record: &Record, file: &str) -> Result<(), Box<dyn Error>>
         .from_writer(f);
     wtr.serialize(record)?;
     wtr.flush()?;
-
-    Ok(())
-}
-
-fn borrow(matches: &ArgMatches, file: &str) -> Result<(), Box<dyn Error>> {
-
     Ok(())
 }
 

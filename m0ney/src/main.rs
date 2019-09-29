@@ -18,7 +18,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let files = init(&config);
     let file = &files["m0ney_file"];
     
-    actions::perform_action(&matches, &file)
+    actions::perform_action(&matches, &file)?;
+    Ok(())
 }
 
 fn parse_config<'a>() -> ArgMatches<'a> {
@@ -33,12 +34,29 @@ fn parse_config<'a>() -> ArgMatches<'a> {
                 .value_name("CONFIG_FILE")
                 .help("Sets a custom config file"),
         )
-        .arg(Arg::with_name("show").short("s").long("show"))
+        .subcommand(SubCommand::with_name("show"))
         .subcommand(
-            SubCommand::with_name("add")
-                .about("add amount of money to category")
+            SubCommand::with_name("get")
+                .about("add amount of m0ney to category")
                 .arg(Arg::with_name("amount").required(true).index(1))
-                .arg(Arg::with_name("category").required(true).index(2)),
+                .arg(Arg::with_name("from").required(true).index(2)),
+        )
+        .subcommand(
+            SubCommand::with_name("borrow")
+                .about("borrow m0ney to some friend in need")
+                .arg(Arg::with_name("amount").required(true).index(1))
+                .arg(Arg::with_name("to").required(true).index(2)),
+        )
+        .subcommand(
+            SubCommand::with_name("spend")
+                .about("spent m0ney on")
+                .arg(Arg::with_name("amount").required(true).index(1))
+                .arg(Arg::with_name("on").required(true).index(2)),
+        ).subcommand(
+            SubCommand::with_name("repay")
+                .about("friend repayed m0ney")
+                .arg(Arg::with_name("amount").required(true).index(1))
+                .arg(Arg::with_name("back").required(true).index(2)),
         )
         .get_matches()
 }
