@@ -1,5 +1,5 @@
 [package]
-name = "m0ney"
+name = "bterm"
 version = "0.1.0"
 authors = ["trobanga <d@niel.re>"]
 edition = "2018"
