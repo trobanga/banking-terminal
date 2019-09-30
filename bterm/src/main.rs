@@ -1,15 +1,11 @@
-use dirs;
-
-extern crate clap;
 use clap::{App, Arg, ArgMatches, SubCommand};
-
-extern crate ini;
+use dirs;
 use ini::Ini;
 
 use std::collections::HashMap;
 use std::error::Error;
 
-pub mod actions;
+mod record;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = parse_config();
@@ -18,7 +14,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let files = init(&config);
     let file = &files["m0ney_file"];
 
-    actions::perform_action(&matches, &file)?;
+    record::apply(&matches, &file)?;
     Ok(())
 }
 
