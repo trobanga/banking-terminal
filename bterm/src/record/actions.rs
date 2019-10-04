@@ -2,6 +2,7 @@ use clap::ArgMatches;
 use std::error::Error;
 
 pub enum Actions {
+    Account,
     Show,
     Get,
     Spend,
@@ -12,6 +13,7 @@ pub enum Actions {
 impl Actions {
     pub fn from_matches(matches: &ArgMatches) -> Option<Self> {
         match matches.subcommand_name() {
+            Some("account") => Some(Actions::Account),
             Some("show") => Some(Actions::Show),
             Some("get") => Some(Actions::Get),
             Some("spend") => Some(Actions::Spend),
@@ -23,21 +25,12 @@ impl Actions {
 
     pub fn name_string(&self) -> String {
         match *self {
+            Actions::Account => String::from("account"),
             Actions::Show => String::from("show"),
             Actions::Get => String::from("get"),
             Actions::Spend => String::from("spend"),
             Actions::Borrow => String::from("borrow"),
             Actions::Repay => String::from("repay"),
-        }
-    }
-
-    pub fn description_string(&self) -> String {
-        match *self {
-            Actions::Show => String::from("show"),
-            Actions::Get => String::from("from"),
-            Actions::Spend => String::from("on"),
-            Actions::Borrow => String::from("to"),
-            Actions::Repay => String::from("back"),
         }
     }
 
