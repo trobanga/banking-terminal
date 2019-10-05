@@ -2,50 +2,8 @@ use clap::ArgMatches;
 use std::collections::HashMap;
 use std::error::Error;
 
-#[derive(Debug)]
-pub enum Commands {
-    Accounts,
-    Show,
-    Get,
-    Spend,
-    Borrow,
-    Repay,
-}
-
-impl Commands {
-    pub fn from_name(name: &str) -> Option<Self> {
-        match name {
-            "accounts" => Some(Commands::Accounts),
-            "show" => Some(Commands::Show),
-            "get" => Some(Commands::Get),
-            "spend" => Some(Commands::Spend),
-            "borrow" => Some(Commands::Borrow),
-            "repay" => Some(Commands::Repay),
-            _ => None,
-        }
-    }
-
-    pub fn name_string(&self) -> String {
-        match *self {
-            Commands::Accounts => String::from("accounts"),
-            Commands::Show => String::from("show"),
-            Commands::Get => String::from("get"),
-            Commands::Spend => String::from("spend"),
-            Commands::Borrow => String::from("borrow"),
-            Commands::Repay => String::from("repay"),
-        }
-    }
-
-    pub fn sign(&self) -> Result<f32, Box<dyn Error>> {
-        match *self {
-            Commands::Get => Ok(1.),
-            Commands::Spend => Ok(-1.),
-            Commands::Borrow => Ok(-1.),
-            Commands::Repay => Ok(1.),
-            _ => Err("This action has no sign".into()),
-        }
-    }
-}
+mod commands;
+pub use commands::Commands;
 
 pub struct Matches {
     pub config_file: String,
@@ -74,9 +32,9 @@ pub fn parse_matches(matches: &ArgMatches) -> Result<Matches, Box<dyn Error>> {
             subcommands.insert(String::from("account"), account);
         }
         ("accounts", Some(_m)) => {}
-        (_cmd, Some(_m)) => {
+        (_cmd, Some(m)) => {
             for n in &["amount", "description", "account"] {
-                let v = matches.value_of(n).unwrap().to_owned();
+                let v = m.value_of(n).unwrap().to_owned();
                 subcommands.insert(String::from(*n), v);
             }
         }

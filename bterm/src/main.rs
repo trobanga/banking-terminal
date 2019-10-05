@@ -4,18 +4,9 @@ use std::error::Error;
 mod bterm;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let matches = parse_config();
-    // let config = config_file(&matches);
-    // let accounts = init(&config);
-
-    // let bt = bterm::BTerm::new(config, matches, accounts);
-
-    // let matches = parse_matches(&matches)?;
-    // let accounts = init(&matches.config_file);
-
+    let matches = parse_config();    
     let bt = bterm::BTerm::new(&matches);
-    bt.apply()?;
-    Ok(())
+    bt.apply()
 }
 
 fn parse_config<'a>() -> ArgMatches<'a> {
