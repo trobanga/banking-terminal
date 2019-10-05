@@ -1,21 +1,27 @@
 use clap::ArgMatches;
+use std::error::Error;
 
-pub mod record;
-pub use record::apply;
-pub use record::accounts::Accounts;
+mod record;
+use record::accounts::{init, Accounts};
+use record::apply;
+use record::Matches;
 
 pub use record::parse_matches;
 
-pub struct BTerm<'a> {
-    config_file: String,
-    matches: ArgMatches<'a>,
-    accounts: Accounts
+pub struct BTerm {
+    matches: Matches,
+    accounts: Accounts,
 }
 
-impl BTerm<'_> {
-    // pub fn new<'a>(config_file: String,
-    //            matches: ArgMatches<'_>,
-    //            accounts: Accounts) -> Self {
-    //     Self {config_file, matches, accounts }
-    // }
+impl BTerm {
+    pub fn new(matches: &ArgMatches) -> Self {
+        let matches = parse_matches(&matches).unwrap();
+        let accounts = init(&matches.config_file).unwrap();
+
+        Self { matches, accounts }
+    }
+
+    pub fn apply(&self) -> Result<(), Box<dyn Error>> {
+        apply(&self.matches, &self.accounts)
+    }
 }

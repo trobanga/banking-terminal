@@ -2,10 +2,7 @@ use clap::ArgMatches;
 use std::collections::HashMap;
 use std::error::Error;
 
-pub mod actions;
-pub use actions::Actions;
-
-
+#[derive(Debug)]
 pub enum Commands {
     Accounts,
     Show,
@@ -16,14 +13,14 @@ pub enum Commands {
 }
 
 impl Commands {
-    pub fn from_matches(matches: &Matches) -> Option<Self> {
-        match matches.command {
-            Some("accounts") => Some(Commands::Accounts),
-            Some("show") => Some(Commands::Show),
-            Some("get") => Some(Commands::Get),
-            Some("spend") => Some(Commands::Spend),
-            Some("borrow") => Some(Commands::Borrow),
-            Some("repay") => Some(Commands::Repay),
+    pub fn from_name(name: &str) -> Option<Self> {
+        match name {
+            "accounts" => Some(Commands::Accounts),
+            "show" => Some(Commands::Show),
+            "get" => Some(Commands::Get),
+            "spend" => Some(Commands::Spend),
+            "borrow" => Some(Commands::Borrow),
+            "repay" => Some(Commands::Repay),
             _ => None,
         }
     }
@@ -51,38 +48,46 @@ impl Commands {
 }
 
 pub struct Matches {
-    config_file: String,
-    command: Command,
-    subcommand: HashMap<String, String>    
+    pub config_file: String,
+    pub command: Commands,
+    subcommands: HashMap<String, String>,
+}
+
+impl Matches {
+    pub fn get(&self, n: &str) -> Result<String, Box<dyn Error>> {
+        Ok(self.subcommands.get(n).unwrap().to_owned())
+    }
 }
 
 pub fn parse_matches(matches: &ArgMatches) -> Result<Matches, Box<dyn Error>> {
     let config_file = config_file(&matches);
     let command = match matches.subcommand_name() {
-        Some(name) => name.to_owned(),
-        None => return Err("No command given".into())
+        Some(name) => Commands::from_name(&name).unwrap(),
+        None => return Err("No command given".into()),
     };
 
-    let mut subcommand = HashMap::new();
-    
+    let mut subcommands = HashMap::new();
+
     match matches.subcommand() {
         ("show", Some(m)) => {
             let account = m.value_of("account").unwrap_or("__ALL__").to_owned();
-            subcommand.insert(String::from("account"), account);
+            subcommands.insert(String::from("account"), account);
         }
-        ("accounts", Some(m)) => {
-
-        }
-        (cmd, Some(m)) => {
+        ("accounts", Some(_m)) => {}
+        (_cmd, Some(_m)) => {
             for n in &["amount", "description", "account"] {
                 let v = matches.value_of(n).unwrap().to_owned();
-                subcommand.insert(String::from(*n), v);
+                subcommands.insert(String::from(*n), v);
             }
         }
         (_, None) => {}
     }
-    
-    Ok(Matches {config_file, command, subcommand})
+
+    Ok(Matches {
+        config_file,
+        command,
+        subcommands,
+    })
 }
 
 fn config_file(matches: &ArgMatches) -> String {

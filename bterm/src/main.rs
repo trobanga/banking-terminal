@@ -1,12 +1,7 @@
 use clap::{App, Arg, ArgMatches, SubCommand};
-use yaml_rust::yaml;
-
-use std::fs::File;
-use std::io::prelude::*;
 use std::error::Error;
 
 mod bterm;
-use bterm::{Accounts, parse_matches};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = parse_config();
@@ -15,8 +10,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // let bt = bterm::BTerm::new(config, matches, accounts);
 
-    let x = parse_matches(&matches)?;    
-    //bterm::apply(&matches, &accounts)?;
+    // let matches = parse_matches(&matches)?;
+    // let accounts = init(&matches.config_file);
+
+    let bt = bterm::BTerm::new(&matches);
+    bt.apply()?;
     Ok(())
 }
 
@@ -34,11 +32,7 @@ fn parse_config<'a>() -> ArgMatches<'a> {
         )
         .subcommand(
             SubCommand::with_name("accounts")
-                .arg(
-                    Arg::with_name("list")
-                        .short("l")
-                        .long("list"),
-                )
+                .arg(Arg::with_name("list").short("l").long("list"))
                 .arg(
                     Arg::with_name("new")
                         .short("n")
@@ -87,23 +81,3 @@ fn parse_config<'a>() -> ArgMatches<'a> {
         )
         .get_matches()
 }
-
-
-fn init(config: &str) -> Accounts {
-    let mut f = File::open(&(config.to_owned() + ".yaml")).unwrap();
-    let mut contents = String::new();
-    f.read_to_string(&mut contents).unwrap();
-    let docs = yaml::YamlLoader::load_from_str(&contents).unwrap();
-    let doc = &docs[0];
-
-    let mut accounts = Accounts::new();
-    if let yaml::Yaml::Hash(ref h) = doc["Accounts"] {
-        for (k, v) in h.iter() {
-            let name = k.as_str().unwrap();
-            let file = v["file"].as_str().unwrap();
-            accounts.insert(String::from(name), String::from(file));
-        }
-    }
-    accounts
-}
-
