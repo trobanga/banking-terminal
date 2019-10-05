@@ -1,16 +1,15 @@
-use clap::ArgMatches;
-
 use std::error::Error;
 use std::fs::{File, OpenOptions};
 
 use chrono;
 use serde::{Deserialize, Serialize};
 
-mod actions;
-use actions::Actions;
+pub mod accounts;
+pub use accounts::Accounts;
 
-pub mod account;
-pub use account::Account;
+pub mod matches;
+pub use matches::{Matches, parse_matches, Actions};
+
 
 #[cfg(test)]
 mod tests {
@@ -60,23 +59,16 @@ impl Record {
     }
 }
 
-pub fn apply(matches: &ArgMatches, accounts: &Account) -> Result<(), Box<dyn Error>> {
+pub fn apply(matches: &Matches, accounts: &Accounts) -> Result<(), Box<dyn Error>> {
     match Actions::from_matches(&matches) {
         Some(Actions::Show) => show(&matches, &accounts),
-        Some(Actions::Account) => Ok(()),
-        Some(action) => {
-            let account = &accounts[&account(&matches, &action)?];
-            let description = description(&matches, &action)?;
-            let amount: f32 = amount(&matches, &action)?;
-            let balance = balance(&account)?;
-            let record = Record::new(&action, amount, description, balance)?;
-            add_record_to_file(&record, &account)
-        }
+        Some(Actions::Accounts) => accounts::list(&accounts),
+        Some(action) => create_record_and_save_to_file(&matches, &accounts, &action),
         _ => Err("Not implemented".into()),
     }
 }
 
-fn show(matches: &ArgMatches, accounts: &Account) -> Result<(), Box<dyn Error>> {
+fn show(matches: &Matches, accounts: &Accounts) -> Result<(), Box<dyn Error>> {
     let account = account(&matches, &Actions::Show)?;
     let f = File::open(&accounts[&account]).expect("Account does not exist.");
     let mut rdr = csv::Reader::from_reader(f);
@@ -87,9 +79,22 @@ fn show(matches: &ArgMatches, accounts: &Account) -> Result<(), Box<dyn Error>> 
     Ok(())
 }
 
+fn create_record_and_save_to_file(
+    matches: &Matches,
+    accounts: &Accounts,
+    action: &Actions,
+) -> Result<(), Box<dyn Error>> {
+    let account = &accounts[&account(&matches, &action)?];
+    let description = description(&matches, &action)?;
+    let amount: f32 = amount(&matches, &action)?;
+    let balance = balance(&account)?;
+    let record = Record::new(&action, amount, description, balance)?;
+    add_record_to_file(&record, &account)
+}
+
 fn get_match_value(
     name: &str,
-    matches: &ArgMatches,
+    matches: &Matches,
     action: &Actions,
 ) -> Result<String, Box<dyn Error>> {
     if let Some(ref matches) = matches.subcommand_matches(&action.name_string()) {
@@ -99,15 +104,15 @@ fn get_match_value(
     Err("Could not determine value from match.".into())
 }
 
-fn account(matches: &ArgMatches, action: &Actions) -> Result<String, Box<dyn Error>> {
+fn account(matches: &Matches, action: &Actions) -> Result<String, Box<dyn Error>> {
     get_match_value("account", &matches, &action)
 }
 
-fn description(matches: &ArgMatches, action: &Actions) -> Result<String, Box<dyn Error>> {
+fn description(matches: &Matches, action: &Actions) -> Result<String, Box<dyn Error>> {
     get_match_value("description", &matches, &action)
 }
 
-fn amount(matches: &ArgMatches, action: &Actions) -> Result<f32, Box<dyn Error>> {
+fn amount(matches: &Matches, action: &Actions) -> Result<f32, Box<dyn Error>> {
     let amount = get_match_value("amount", &matches, &action)
         .unwrap()
         .parse::<f32>()?;

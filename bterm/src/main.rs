@@ -1,20 +1,22 @@
 use clap::{App, Arg, ArgMatches, SubCommand};
-use dirs;
 use yaml_rust::yaml;
 
 use std::fs::File;
 use std::io::prelude::*;
-
 use std::error::Error;
 
-mod record;
-use record::Account;
+mod bterm;
+use bterm::{Accounts, parse_matches};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = parse_config();
-    let config = config_file(&matches);
-    let accounts = init(&config);
-    record::apply(&matches, &accounts)?;
+    // let config = config_file(&matches);
+    // let accounts = init(&config);
+
+    // let bt = bterm::BTerm::new(config, matches, accounts);
+
+    let x = parse_matches(&matches)?;    
+    //bterm::apply(&matches, &accounts)?;
     Ok(())
 }
 
@@ -27,22 +29,33 @@ fn parse_config<'a>() -> ArgMatches<'a> {
             Arg::with_name("config")
                 .short("c")
                 .long("config")
-                .value_name("config_file")
+                .value_name("CONFIG_FILE")
                 .help("Sets a custom config file"),
         )
         .subcommand(
-            SubCommand::with_name("account")
+            SubCommand::with_name("accounts")
                 .arg(
-                    Arg::with_name("list_accounts")
+                    Arg::with_name("list")
                         .short("l")
-                        .long("list-accounts"),
+                        .long("list"),
                 )
-                .arg(Arg::with_name("new").short("n")),
+                .arg(
+                    Arg::with_name("new")
+                        .short("n")
+                        .takes_value(true)
+                        .value_name("ACCOUNT_NAME"),
+                )
+                .arg(
+                    Arg::with_name("delete")
+                        .short("d")
+                        .long("delete")
+                        .value_name("ACCOUNT_NAME"),
+                ),
         )
         .subcommand(
             SubCommand::with_name("show")
                 .about("show account content")
-                .arg(Arg::with_name("account").required(true).index(1)),
+                .arg(Arg::with_name("account").index(1)),
         )
         .subcommand(
             SubCommand::with_name("get")
@@ -75,24 +88,15 @@ fn parse_config<'a>() -> ArgMatches<'a> {
         .get_matches()
 }
 
-fn config_file(matches: &ArgMatches) -> String {
-    let mut path = home_dir();
-    path.push_str("/.bterm/config");
-    String::from(matches.value_of("config").unwrap_or(&path))
-}
 
-fn home_dir() -> String {
-    String::from(dirs::home_dir().unwrap().to_str().unwrap())
-}
-
-fn init(config: &str) -> Account {
+fn init(config: &str) -> Accounts {
     let mut f = File::open(&(config.to_owned() + ".yaml")).unwrap();
     let mut contents = String::new();
     f.read_to_string(&mut contents).unwrap();
     let docs = yaml::YamlLoader::load_from_str(&contents).unwrap();
     let doc = &docs[0];
 
-    let mut accounts = Account::new();
+    let mut accounts = Accounts::new();
     if let yaml::Yaml::Hash(ref h) = doc["Accounts"] {
         for (k, v) in h.iter() {
             let name = k.as_str().unwrap();
@@ -102,3 +106,4 @@ fn init(config: &str) -> Account {
     }
     accounts
 }
+
