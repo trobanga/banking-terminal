@@ -62,14 +62,34 @@ impl Record {
 pub fn apply(matches: &Matches, accounts: &Accounts) -> Result<(), Box<dyn Error>> {
     match &matches.command {
         Commands::Show => show(&matches, &accounts),
-        Commands::Accounts => accounts::list(&accounts),
+        Commands::Accounts => {
+            if matches.subcommands.contains_key("list") {
+                return accounts.list();
+            } else if let Some(x) = matches.subcommands.get("new") {
+                return accounts.new_account(&matches.config_file, &x);
+            } else if let Some(x) = matches.subcommands.get("delete") {
+                println!("{:?}", x);
+            }
+            return Err("Cannot perform command.".into());
+        }
         command => create_record_and_save_to_file(&matches, &accounts, &command),
     }
 }
 
 fn show(matches: &Matches, accounts: &Accounts) -> Result<(), Box<dyn Error>> {
     let account = account(&matches)?;
-    let f = File::open(&accounts[&account]).expect("Account does not exist.");
+    if account == "__ALL__" {
+        for account in accounts.accounts.keys() {
+            show_account(&accounts, &account)?;
+        }
+    } else {
+        show_account(&accounts, &account)?;
+    }
+    Ok(())
+}
+
+fn show_account(accounts: &Accounts, account: &str) -> Result<(), Box<dyn Error>> {
+    let f = File::open(&accounts.accounts[account]).expect("Account does not exist.");
     let mut rdr = csv::Reader::from_reader(f);
     for result in rdr.deserialize() {
         let record: Record = result?;
@@ -83,7 +103,7 @@ fn create_record_and_save_to_file(
     accounts: &Accounts,
     command: &Commands,
 ) -> Result<(), Box<dyn Error>> {
-    let account = &accounts[&account(&matches)?];
+    let account = &accounts.accounts[&account(&matches)?];
     let description = description(&matches)?;
     let amount: f32 = amount(&matches, &command)?;
     let balance = balance(&account)?;

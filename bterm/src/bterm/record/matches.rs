@@ -8,7 +8,7 @@ pub use commands::Commands;
 pub struct Matches {
     pub config_file: String,
     pub command: Commands,
-    subcommands: HashMap<String, String>,
+    pub subcommands: HashMap<String, String>,
 }
 
 impl Matches {
@@ -31,7 +31,15 @@ pub fn parse_matches(matches: &ArgMatches) -> Result<Matches, Box<dyn Error>> {
             let account = m.value_of("account").unwrap_or("__ALL__").to_owned();
             subcommands.insert(String::from("account"), account);
         }
-        ("accounts", Some(_m)) => {}
+        ("accounts", Some(m)) => {
+            if m.is_present("list") {
+                subcommands.insert(String::from("list"), "".to_owned());
+            } else if let Some(x) = m.value_of("new") {
+                subcommands.insert(String::from("new"), x.to_owned());
+            } else if let Some(x) = m.value_of("delete") {
+                subcommands.insert(String::from("delete"), x.to_owned());
+            }
+        }
         (_cmd, Some(m)) => {
             for n in &["amount", "description", "account"] {
                 let v = m.value_of(n).unwrap().to_owned();

@@ -2,7 +2,7 @@ use clap::ArgMatches;
 use std::error::Error;
 
 mod record;
-use record::accounts::{init, Accounts};
+use record::accounts::Accounts;
 use record::apply;
 use record::Matches;
 
@@ -16,8 +16,8 @@ pub struct BTerm {
 impl BTerm {
     pub fn new(matches: &ArgMatches) -> Self {
         let matches = parse_matches(&matches).unwrap();
-        let accounts = init(&matches.config_file).unwrap();
 
+        let accounts = Accounts::new(&matches.config_file);
         Self { matches, accounts }
     }
 

@@ -4,7 +4,7 @@ use std::error::Error;
 mod bterm;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let matches = parse_config();    
+    let matches = parse_config();
     let bt = bterm::BTerm::new(&matches);
     bt.apply()
 }
@@ -27,13 +27,15 @@ fn parse_config<'a>() -> ArgMatches<'a> {
                 .arg(
                     Arg::with_name("new")
                         .short("n")
+                        .long("new")
                         .takes_value(true)
                         .value_name("ACCOUNT_NAME"),
                 )
                 .arg(
                     Arg::with_name("delete")
                         .short("d")
-                        .long("delete")
+                        .long("rm")
+                        .takes_value(true)
                         .value_name("ACCOUNT_NAME"),
                 ),
         )
