@@ -11,4 +11,4 @@ dirs = "2"
 csv = "1"
 chrono = "*"
 serde = { version = "1", features = ["derive"] }
-yaml-rust = "0.4"
+serde_json = "*"

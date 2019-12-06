@@ -58,7 +58,7 @@ pub fn parse_matches(matches: &ArgMatches) -> Result<Matches, Box<dyn Error>> {
 
 fn config_file(matches: &ArgMatches) -> String {
     let mut path = home_dir();
-    path.push_str("/.bterm/config");
+    path.push_str("/.bterm/config.json");
     String::from(matches.value_of("config").unwrap_or(&path))
 }
 

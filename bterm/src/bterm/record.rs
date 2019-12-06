@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::fs::{File, OpenOptions};
+use std::fs::{OpenOptions};
 
 use chrono;
 use serde::{Deserialize, Serialize};
@@ -77,24 +77,24 @@ pub fn apply(matches: &Matches, accounts: &Accounts) -> Result<(), Box<dyn Error
 }
 
 fn show(matches: &Matches, accounts: &Accounts) -> Result<(), Box<dyn Error>> {
-    let account = account(&matches)?;
-    if account == "__ALL__" {
-        for account in accounts.accounts.keys() {
-            show_account(&accounts, &account)?;
-        }
-    } else {
-        show_account(&accounts, &account)?;
-    }
+    // let account = account(&matches)?;
+    // if account == "__ALL__" {
+    //     for account in accounts.accounts() {
+    //         show_account(&accounts, &account)?;
+    //     }
+    // } else {
+    //     show_account(&accounts, &account)?;
+    // }
     Ok(())
 }
 
 fn show_account(accounts: &Accounts, account: &str) -> Result<(), Box<dyn Error>> {
-    let f = File::open(&accounts.accounts[account]).expect("Account does not exist.");
-    let mut rdr = csv::Reader::from_reader(f);
-    for result in rdr.deserialize() {
-        let record: Record = result?;
-        println!("{:?}", record);
-    }
+    // let f = File::open(&accounts.accounts[account]).expect("Account does not exist.");
+    // let mut rdr = csv::Reader::from_reader(f);
+    // for result in rdr.deserialize() {
+    //     let record: Record = result?;
+    //     println!("{:?}", record);
+    // }
     Ok(())
 }
 
@@ -103,12 +103,13 @@ fn create_record_and_save_to_file(
     accounts: &Accounts,
     command: &Commands,
 ) -> Result<(), Box<dyn Error>> {
-    let account = &accounts.accounts[&account(&matches)?];
-    let description = description(&matches)?;
-    let amount: f32 = amount(&matches, &command)?;
-    let balance = balance(&account)?;
-    let record = Record::new(&command, amount, description, balance)?;
-    add_record_to_file(&record, &account)
+    Ok(())
+//     let account = &accounts.accounts[&account(&matches)?];
+//     let description = description(&matches)?;
+//     let amount: f32 = amount(&matches, &command)?;
+//     let balance = balance(&account)?;
+//     let record = Record::new(&command, amount, description, balance)?;
+//     add_record_to_file(&record, &account)
 }
 
 fn get_match_value(name: &str, matches: &Matches) -> Result<String, Box<dyn Error>> {
@@ -132,7 +133,7 @@ fn amount(matches: &Matches, command: &Commands) -> Result<f32, Box<dyn Error>> 
 
 fn balance(file: &str) -> Result<f32, Box<dyn Error>> {
     let mut rdr = csv::Reader::from_path(file)?;
-    if let Some(x) = rdr.records().last().unwrap()?.get(4) {
+    if let Some(x) = rdr.records().last().unwrap()?.get(4) { // balance is the 5th element in Records
         let balance = x.parse::<f32>()?;
         return Ok(balance);
     }

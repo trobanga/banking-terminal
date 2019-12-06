@@ -2,11 +2,9 @@ use clap::ArgMatches;
 use std::error::Error;
 
 mod record;
-use record::accounts::Accounts;
-use record::apply;
 use record::Matches;
-
-pub use record::parse_matches;
+use record::accounts::Accounts;
+use record::{parse_matches, apply};
 
 pub struct BTerm {
     matches: Matches,
