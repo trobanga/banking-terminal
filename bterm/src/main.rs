@@ -5,7 +5,7 @@ mod bterm;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = parse_config();
-    let bt = bterm::BTerm::new(&matches);
+    let mut bt = bterm::BTerm::new(&matches);
     bt.apply()
 }
 
@@ -14,13 +14,6 @@ fn parse_config<'a>() -> ArgMatches<'a> {
         .version("0.1")
         .author("Daniel Hahne")
         .about("keep track of your m0ney")
-        .arg(
-            Arg::with_name("config")
-                .short("c")
-                .long("config")
-                .value_name("CONFIG_FILE")
-                .help("Sets a custom config file"),
-        )
         .subcommand(
             SubCommand::with_name("accounts")
                 .arg(Arg::with_name("list").short("l").long("list"))

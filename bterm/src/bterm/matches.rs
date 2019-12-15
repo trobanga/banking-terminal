@@ -18,7 +18,7 @@ impl Matches {
 }
 
 pub fn parse_matches(matches: &ArgMatches) -> Result<Matches, Box<dyn Error>> {
-    let config_file = config_file(&matches);
+    let config_file = config_file();
     let command = match matches.subcommand_name() {
         Some(name) => Commands::from_name(&name).unwrap(),
         None => return Err("No command given".into()),
@@ -56,10 +56,10 @@ pub fn parse_matches(matches: &ArgMatches) -> Result<Matches, Box<dyn Error>> {
     })
 }
 
-fn config_file(matches: &ArgMatches) -> String {
+fn config_file() -> String {
     let mut path = home_dir();
     path.push_str("/.bterm/config.json");
-    String::from(matches.value_of("config").unwrap_or(&path))
+    String::from(&path)
 }
 
 fn home_dir() -> String {

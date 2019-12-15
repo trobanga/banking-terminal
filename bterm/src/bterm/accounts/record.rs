@@ -4,30 +4,24 @@ use std::fs::{OpenOptions};
 use chrono;
 use serde::{Deserialize, Serialize};
 
-pub mod accounts;
-pub use accounts::Accounts;
-
-pub mod matches;
-use matches::Commands;
-pub use matches::{parse_matches, Matches};
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn record_new() {
-        let record = Record::new(
-            &Commands::Spend,
-            -138.95,
-            String::from("more m0ney"),
-            2405.83,
-        )
-        .unwrap();
-        assert_eq!(record.amount, -138.95);
-        assert_eq!(record.balance, 2266.88);
-        assert_eq!(record.description, String::from("more m0ney"));
-    }
+    // #[test]
+    // fn record_new() {
+    //     let record = Record::new(
+    //         &Commands::Spend,
+    //         -138.95,
+    //         String::from("more m0ney"),
+    //         2405.83,
+    //     )
+    //     .unwrap();
+    //     assert_eq!(record.amount, -138.95);
+    //     assert_eq!(record.balance, 2266.88);
+    //     assert_eq!(record.description, String::from("more m0ney"));
+    // }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -60,20 +54,21 @@ impl Record {
 }
 
 pub fn apply(matches: &Matches, accounts: &Accounts) -> Result<(), Box<dyn Error>> {
-    match &matches.command {
-        Commands::Show => show(&matches, &accounts),
-        Commands::Accounts => {
-            if matches.subcommands.contains_key("list") {
-                return accounts.list();
-            } else if let Some(x) = matches.subcommands.get("new") {
-                return accounts.new_account(&matches.config_file, &x);
-            } else if let Some(x) = matches.subcommands.get("delete") {
-                println!("{:?}", x);
-            }
-            return Err("Cannot perform command.".into());
-        }
-        command => create_record_and_save_to_file(&matches, &accounts, &command),
-    }
+    // match &matches.command {
+    //     Commands::Show => show(&matches, &accounts),
+    //     Commands::Accounts => {
+    //         if matches.subcommands.contains_key("list") {
+    //             return accounts.list();
+    //         } else if let Some(x) = matches.subcommands.get("new") {
+    //             return accounts.new_account(&matches.config_file, &x);
+    //         } else if let Some(x) = matches.subcommands.get("delete") {
+    //             println!("{:?}", x);
+    //         }
+    //         return Err("Cannot perform command.".into());
+    //     }
+    //     command => create_record_and_save_to_file(&matches, &accounts, &command),
+    // }
+    Ok(())
 }
 
 fn show(matches: &Matches, accounts: &Accounts) -> Result<(), Box<dyn Error>> {
